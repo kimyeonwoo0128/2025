@@ -7,13 +7,14 @@ from mpl_toolkits.mplot3d import Axes3D
 st.set_page_config(page_title="지구 자기장 3D 시각화", layout="wide")
 st.title("🌍 지구 자기장 3D 시각화 (Dipole Model)")
 
-st.write("지구 중심의 단순 이중극자 자기장 모델을 3D로 시각화합니다. "
-         "위치 슬라이더를 조절하면 빨간 점으로 현재 위치가 표시됩니다.")
+# --- 레이아웃 구성 (좌측: 입력 / 우측: 그래프) ---
+col1, col2 = st.columns([1, 2])
 
-# --- 사용자 입력 ---
-lat = st.slider("위도 (°)", -90.0, 90.0, 37.5, step=0.1)
-lon = st.slider("경도 (°)", -180.0, 180.0, 127.0, step=0.1)
-alt = st.slider("고도 (km)", 0.0, 1000.0, 0.0, step=10.0)
+with col1:
+    st.write("**위치 슬라이더**")
+    lat = st.slider("위도 (°)", -90.0, 90.0, 37.5, step=0.1)
+    lon = st.slider("경도 (°)", -180.0, 180.0, 127.0, step=0.1)
+    alt = st.slider("고도 (km)", 0.0, 1000.0, 0.0, step=10.0)
 
 # --- 지구 좌표 변환 (위도, 경도 → 3D 좌표) ---
 R = 1.0  # 지구 반지름을 1로 정규화
@@ -55,7 +56,7 @@ for xi in grid:
                 xg.append(xi); yg.append(yi); zg.append(zi)
                 u.append(B[0]); v.append(B[1]); w.append(B[2])
 
-# 자기장 선(벡터필드)
+# 자기장 벡터필드
 ax.quiver(xg, yg, zg, u, v, w, length=0.3, normalize=True, color='orange', alpha=0.7)
 
 # 현재 위치 표시
@@ -67,5 +68,6 @@ ax.set_xlabel('X'); ax.set_ylabel('Y'); ax.set_zlabel('Z')
 ax.set_title("Earth with Magnetic Dipole Field")
 ax.legend()
 
-st.pyplot(fig)
-st.info("주황색 화살표: 지구 자기장 방향 / 파란 구: 지구 / 빨간 점: 현재 위치")
+with col2:
+    st.pyplot(fig)
+    st.info("주황색 화살표: 지구 자기장 방향 / 파란 구: 지구 / 빨간 점: 현재 위치")
