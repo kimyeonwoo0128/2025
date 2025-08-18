@@ -37,4 +37,3 @@ ax.set_ylabel("z (지구 반경)")
 ax.set_aspect('equal')
 
 st.pyplot(fig)
-
