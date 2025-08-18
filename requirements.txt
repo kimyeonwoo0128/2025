@@ -2,3 +2,4 @@ plotly
 folium
 koreanize_matplotlib
 numpy
+igrf
