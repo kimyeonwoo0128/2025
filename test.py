@@ -52,4 +52,14 @@ with col2:
             colat = math.radians(90 - la)
             B_grid[i, j] = B0 * (1 + 0.3 * math.sin(colat) * math.cos(math.radians(lo)))
 
-    fig, ax = plt.subplots(figsize
+    fig, ax = plt.subplots(figsize=(8, 5))
+    c = ax.imshow(B_grid, extent=[-180, 180, -80, 80], origin='lower', cmap='plasma')
+    plt.colorbar(c, ax=ax, label='Strength (nT)')
+    ax.plot(lon, lat, 'ro', markersize=8, label='Current location')
+    ax.set_xlabel('Longitude (°)')
+    ax.set_ylabel('Latitude (°)')
+    ax.set_title('Earth Magnetic Field (Dipole Approximation)')
+    ax.legend(loc='lower left')
+    st.pyplot(fig)
+
+st.info("빨간 점은 현재 선택한 위치입니다. 색상은 자기장 세기를 나타냅니다.")
