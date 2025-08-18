@@ -1,65 +1,71 @@
 import numpy as np
 import streamlit as st
 import matplotlib.pyplot as plt
-import math
+from mpl_toolkits.mplot3d import Axes3D
 
-# --- 페이지 기본 설정 ---
-st.set_page_config(page_title="지구 자기장 (근사 모델)", layout="wide")
-st.title("🧲 지구 자기장 시각화 (간단 근사)")
+# --- 페이지 설정 ---
+st.set_page_config(page_title="지구 자기장 3D 시각화", layout="wide")
+st.title("🌍 지구 자기장 3D 시각화 (Dipole Model)")
 
-st.write("**위도/경도/고도**를 조절하면 단순한 경사 이중극자 모델로 계산한 자기장을 보여줍니다.")
-st.write("이 모델은 실제 IGRF13 모델보다 단순하지만 설치 없이 실행됩니다.")
+st.write("지구 중심의 단순 이중극자 자기장 모델을 3D로 시각화합니다. "
+         "위치 슬라이더를 조절하면 빨간 점으로 현재 위치가 표시됩니다.")
 
 # --- 사용자 입력 ---
-col1, col2 = st.columns([1, 2])
+lat = st.slider("위도 (°)", -90.0, 90.0, 37.5, step=0.1)
+lon = st.slider("경도 (°)", -180.0, 180.0, 127.0, step=0.1)
+alt = st.slider("고도 (km)", 0.0, 1000.0, 0.0, step=10.0)
 
-with col1:
-    lat = st.slider("위도 (°)", -90.0, 90.0, 37.5, step=0.1)
-    lon = st.slider("경도 (°)", -180.0, 180.0, 127.0, step=0.1)
-    alt = st.slider("고도 (km)", 0.0, 1000.0, 0.0, step=10.0)
+# --- 지구 좌표 변환 (위도, 경도 → 3D 좌표) ---
+R = 1.0  # 지구 반지름을 1로 정규화
+lat_r = np.radians(lat)
+lon_r = np.radians(lon)
+x_pos = (R + alt/6371) * np.cos(lat_r) * np.cos(lon_r)
+y_pos = (R + alt/6371) * np.cos(lat_r) * np.sin(lon_r)
+z_pos = (R + alt/6371) * np.sin(lat_r)
 
-    # 지구 자기장 dipole 근사 (경사축 11°)
-    B0 = 30000  # nT (지표면 평균 자기장 세기)
-    tilt = math.radians(11)
-    colat = math.radians(90 - lat)
-    # 단순 위도/경도 변화 (약간의 경사 포함)
-    B = B0 * (1 + 0.3 * math.sin(colat) * math.cos(math.radians(lon)))
+# --- Dipole 자기장 계산 ---
+def dipole_field(x, y, z):
+    r = np.sqrt(x**2 + y**2 + z**2)
+    m = np.array([0, 0, 1])  # dipole along z-axis
+    r_vec = np.array([x, y, z])
+    dot = np.dot(m, r_vec)
+    B = (3 * dot * r_vec / r**5) - (m / r**3)
+    return B
 
-    # 경사각(자기장 방향) 단순 근사
-    dip = 90 - lat + math.degrees(tilt) * math.cos(math.radians(lon))
-    dec = 0.0  # 편각은 단순화
+# --- 시각화를 위한 격자 생성 ---
+phi, theta = np.mgrid[0:2*np.pi:30j, 0:np.pi:15j]
+xs = R * np.cos(phi) * np.sin(theta)
+ys = R * np.sin(phi) * np.sin(theta)
+zs = R * np.cos(theta)
 
-    st.subheader("선택한 위치의 자기장 (근사값)")
-    st.metric("세기 (nT)", f"{B:.0f}")
-    st.metric("경사각 (°)", f"{dip:.1f}")
-    st.metric("편각 (°)", f"{dec:.1f}")
+# --- 3D 플롯 ---
+fig = plt.figure(figsize=(8, 8))
+ax = fig.add_subplot(111, projection='3d')
+ax.plot_surface(xs, ys, zs, color='b', alpha=0.3)  # 지구 구체
 
-    # 색상으로 세기 표시
-    st.markdown(
-        f"<div style='padding:10px; background-color:rgb({int(min(B/60000*255,255))},0,{int(255-min(B/60000*255,255))}); color:white;'>"
-        f"세기 색상 표시</div>", 
-        unsafe_allow_html=True
-    )
+# 자기장 벡터 샘플링
+u, v, w = [], [], []
+xg, yg, zg = [], [], []
+grid = np.linspace(-2, 2, 7)
+for xi in grid:
+    for yi in grid:
+        for zi in grid:
+            if 0.8 < np.sqrt(xi**2 + yi**2 + zi**2) < 2.0:
+                B = dipole_field(xi, yi, zi)
+                xg.append(xi); yg.append(yi); zg.append(zi)
+                u.append(B[0]); v.append(B[1]); w.append(B[2])
 
-with col2:
-    # 전세계 자기장 세기 맵
-    lat_grid = np.linspace(-80, 80, 41)
-    lon_grid = np.linspace(-180, 180, 73)
-    B_grid = np.zeros((len(lat_grid), len(lon_grid)))
+# 자기장 선(벡터필드)
+ax.quiver(xg, yg, zg, u, v, w, length=0.3, normalize=True, color='orange', alpha=0.7)
 
-    for i, la in enumerate(lat_grid):
-        for j, lo in enumerate(lon_grid):
-            colat = math.radians(90 - la)
-            B_grid[i, j] = B0 * (1 + 0.3 * math.sin(colat) * math.cos(math.radians(lo)))
+# 현재 위치 표시
+ax.scatter(x_pos, y_pos, z_pos, color='r', s=100, label='Current Location')
 
-    fig, ax = plt.subplots(figsize=(8, 5))
-    c = ax.imshow(B_grid, extent=[-180, 180, -80, 80], origin='lower', cmap='plasma')
-    plt.colorbar(c, ax=ax, label='Strength (nT)')
-    ax.plot(lon, lat, 'ro', markersize=8, label='Current location')
-    ax.set_xlabel('Longitude (°)')
-    ax.set_ylabel('Latitude (°)')
-    ax.set_title('Earth Magnetic Field (Dipole Approximation)')
-    ax.legend(loc='lower left')
-    st.pyplot(fig)
+# 축과 스타일
+ax.set_xlim([-2, 2]); ax.set_ylim([-2, 2]); ax.set_zlim([-2, 2])
+ax.set_xlabel('X'); ax.set_ylabel('Y'); ax.set_zlabel('Z')
+ax.set_title("Earth with Magnetic Dipole Field")
+ax.legend()
 
-st.info("빨간 점은 현재 선택한 위치입니다. 색상은 자기장 세기를 나타냅니다.")
+st.pyplot(fig)
+st.info("주황색 화살표: 지구 자기장 방향 / 파란 구: 지구 / 빨간 점: 현재 위치")
