@@ -2,16 +2,19 @@ import numpy as np
 import streamlit as st
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import math
 
-# --- 페이지 설정 ---
-st.set_page_config(page_title="지구 자기장 3D 시각화", layout="wide")
-st.title("🌍 지구 자기장 3D 시각화 (Dipole Model)")
+# --- 페이지 설정 (프로그램 이름 반영) ---
+st.set_page_config(page_title="지구 자기장 시뮬레이터", layout="wide")
+st.title("🧲 지구 자기장 시뮬레이터")
+
+st.write("지구와 지구 자기장을 3D로 시각화합니다. 위도·경도·고도를 조절해 현재 위치를 확인하세요.")
 
 # --- 레이아웃 구성 (좌측: 입력 / 우측: 그래프) ---
 col1, col2 = st.columns([1, 2])
 
 with col1:
-    st.write("**위치 슬라이더**")
+    st.subheader("위치 설정")
     lat = st.slider("위도 (°)", -90.0, 90.0, 37.5, step=0.1)
     lon = st.slider("경도 (°)", -180.0, 180.0, 127.0, step=0.1)
     alt = st.slider("고도 (km)", 0.0, 1000.0, 0.0, step=10.0)
@@ -33,7 +36,7 @@ def dipole_field(x, y, z):
     B = (3 * dot * r_vec / r**5) - (m / r**3)
     return B
 
-# --- 시각화를 위한 격자 생성 ---
+# --- 지구 표면 생성 ---
 phi, theta = np.mgrid[0:2*np.pi:30j, 0:np.pi:15j]
 xs = R * np.cos(phi) * np.sin(theta)
 ys = R * np.sin(phi) * np.sin(theta)
@@ -56,13 +59,13 @@ for xi in grid:
                 xg.append(xi); yg.append(yi); zg.append(zi)
                 u.append(B[0]); v.append(B[1]); w.append(B[2])
 
-# 자기장 벡터필드
+# 자기장 벡터필드 (시각화 텍스트는 영어 유지)
 ax.quiver(xg, yg, zg, u, v, w, length=0.3, normalize=True, color='orange', alpha=0.7)
 
-# 현재 위치 표시
+# 현재 선택 위치 표시
 ax.scatter(x_pos, y_pos, z_pos, color='r', s=100, label='Current Location')
 
-# 축과 스타일
+# 축과 스타일 (영어)
 ax.set_xlim([-2, 2]); ax.set_ylim([-2, 2]); ax.set_zlim([-2, 2])
 ax.set_xlabel('X'); ax.set_ylabel('Y'); ax.set_zlabel('Z')
 ax.set_title("Earth with Magnetic Dipole Field")
