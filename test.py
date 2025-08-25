@@ -5,8 +5,8 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 
 # --- 페이지 설정 ---
-st.set_page_config(page_title="지구 자기장 시각화 (세기 강조)", layout="wide")
-st.title("🧲 지구 자기장 시각화 (Arrow Length & Color ∝ Strength)")
+st.set_page_config(page_title="지구 자기장 시각화", layout="wide")
+st.title("🧲 지구 자기장 시각화")
 
 # --- 사용자 입력 ---
 col1, col2 = st.columns([1, 2])
@@ -83,7 +83,7 @@ ax.scatter(x_pos, y_pos, z_pos, color='r', s=100, label='Current Location')
 # --- 축 설정 ---
 ax.set_xlim([-2, 2]); ax.set_ylim([-2, 2]); ax.set_zlim([-2, 2])
 ax.set_xlabel('X'); ax.set_ylabel('Y'); ax.set_zlabel('Z')
-ax.set_title("Earth with Magnetic Dipole Field (Arrow Length & Color ∝ Strength)")
+ax.set_title("Earth with Magnetic Dipole Field")
 ax.legend()
 
 # --- Streamlit 출력 ---
@@ -95,7 +95,7 @@ B_current = dipole_field(x_pos, y_pos, z_pos)
 B_strength = np.linalg.norm(B_current)
 st.metric(label="현재 위치 자기장 세기", value=f"{B_strength:.3f}")
 
-# --- 수정된 시각화 설명 (쉼표 구분) ---
+# --- 시각화 설명 (쉼표 구분) ---
 st.info(
     "화살표 길이와 색깔 = 자기장 세기, 길고 진한 색 = 강한 자기장, 짧고 연한 색 = 약한 자기장, 파란 구 = 지구, 빨간 점 = 현재 선택 위치"
 )
