@@ -2,12 +2,13 @@ import numpy as np
 import streamlit as st
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
 
 # --- 페이지 설정 ---
-st.set_page_config(page_title="지구 자기장 시뮬레이터", layout="wide")
-st.title("🧲 지구 자기장 세기 강조 시각화")
+st.set_page_config(page_title="지구 자기장 시각화 (세기 강조)", layout="wide")
+st.title("🧲 지구 자기장 시각화 (Arrow Length & Color ∝ Strength)")
 
-# --- 위치 입력 ---
+# --- 사용자 입력 ---
 col1, col2 = st.columns([1, 2])
 with col1:
     st.subheader("위치 설정")
@@ -43,10 +44,23 @@ fig = plt.figure(figsize=(8,8))
 ax = fig.add_subplot(111, projection='3d')
 ax.plot_surface(xs, ys, zs, color='b', alpha=0.3)
 
-# --- 자기장 벡터 계산 및 길이 반영 ---
-u, v, w = [], [], []
-xg, yg, zg = [], [], []
+# --- 자기장 벡터 계산 ---
+xg, yg, zg, u, v, w, colors = [], [], [], [], [], [], []
 grid = np.linspace(-2, 2, 7)
+B_magnitudes = []
+
+# 먼저 모든 B 크기 계산
+for xi in grid:
+    for yi in grid:
+        for zi in grid:
+            r = np.sqrt(xi**2 + yi**2 + zi**2)
+            if 0.8 < r < 2.0:
+                B = dipole_field(xi, yi, zi)
+                B_magnitudes.append(np.linalg.norm(B))
+
+B_max = max(B_magnitudes)
+
+# 다시 벡터 생성 (색상 + 길이 반영)
 for xi in grid:
     for yi in grid:
         for zi in grid:
@@ -54,14 +68,14 @@ for xi in grid:
             if 0.8 < r < 2.0:
                 B = dipole_field(xi, yi, zi)
                 strength = np.linalg.norm(B)
-                # 세기가 너무 크면 scale 조절
-                scale_factor = 0.5
-                B_scaled = B * scale_factor
+                scale = 0.5  # 길이 조절
+                B_scaled = B * scale
                 xg.append(xi); yg.append(yi); zg.append(zi)
                 u.append(B_scaled[0]); v.append(B_scaled[1]); w.append(B_scaled[2])
+                colors.append(cm.viridis(strength / B_max))  # 색상
 
 # --- 자기장 화살표 ---
-ax.quiver(xg, yg, zg, u, v, w, color='orange', alpha=0.7)
+ax.quiver(xg, yg, zg, u, v, w, color=colors, alpha=0.9)
 
 # --- 현재 위치 표시 ---
 ax.scatter(x_pos, y_pos, z_pos, color='r', s=100, label='Current Location')
@@ -69,7 +83,7 @@ ax.scatter(x_pos, y_pos, z_pos, color='r', s=100, label='Current Location')
 # --- 축 설정 ---
 ax.set_xlim([-2, 2]); ax.set_ylim([-2, 2]); ax.set_zlim([-2, 2])
 ax.set_xlabel('X'); ax.set_ylabel('Y'); ax.set_zlabel('Z')
-ax.set_title("Earth with Magnetic Dipole Field (Arrow Length ∝ Strength)")
+ax.set_title("Earth with Magnetic Dipole Field (Arrow Length & Color ∝ Strength)")
 ax.legend()
 
 # --- Streamlit 출력 ---
@@ -80,4 +94,4 @@ with col2:
 B_current = dipole_field(x_pos, y_pos, z_pos)
 B_strength = np.linalg.norm(B_current)
 st.metric(label="현재 위치 자기장 세기", value=f"{B_strength:.3f}")
-st.info("주황색 화살표 길이 = 자기장 세기 / 파란 구 = 지구 / 빨간 점 = 현재 위치")
+st.info("주황색 화살표 길이와 색깔 = 자기장 세기 / 파란 구 = 지구 / 빨간 점 = 현재 위치")
