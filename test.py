@@ -94,4 +94,12 @@ with col2:
 B_current = dipole_field(x_pos, y_pos, z_pos)
 B_strength = np.linalg.norm(B_current)
 st.metric(label="현재 위치 자기장 세기", value=f"{B_strength:.3f}")
-st.info("주황색 화살표 길이와 색깔 = 자기장 세기 / 파란 구 = 지구 / 빨간 점 = 현재 위치")
+
+# --- 수정된 시각화 설명 ---
+st.info(
+    "화살표 길이와 색깔 = 자기장 세기\n"
+    "  • 길고 진한 색 = 강한 자기장\n"
+    "  • 짧고 연한 색 = 약한 자기장\n"
+    "파란 구 = 지구\n"
+    "빨간 점 = 현재 선택 위치"
+)
